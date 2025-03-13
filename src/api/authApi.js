@@ -12,7 +12,7 @@ export const loginAdmin = async (credentials) => {
 export const sendOtp = async (email) => {
   return axios.post(`${API_BASE_URL}/api/adminauth/admin-send-otp`, { email });
 };
-
+ 
 export const verifyOtp = async (otpData) => {
   return axios.post(`${API_BASE_URL}/api/adminauth/admin-verify-otp`, otpData);
 };
