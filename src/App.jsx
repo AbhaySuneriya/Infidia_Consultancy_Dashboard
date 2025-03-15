@@ -4,8 +4,9 @@ import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Home from './pages/Home'
 import 'react-toastify/dist/ReactToastify.css'
-import ForgetPassword from './pages/ForgetPassword'
-import EmailVerification from './pages/EmailVerification'
+
+import EmailOtpVerification from './pages/EmailOtpVerification'
+import ChangePassword from './pages/ChangePassword'
 
 const App = () => {
   return (
@@ -16,12 +17,10 @@ const App = () => {
 <Route path="/login" element={<Login/>} />
 <Route path="/signup" element={<SignUp/>} />
 <Route path="/home" element={<Home/>} />
-<Route path="/forgetPassword" element={<ForgetPassword/>}
- />
- <Route path="/" element={<EmailVerification/>}/>
-
+ <Route path="/emailOtpVerification" element={<EmailOtpVerification/>}/>
+ <Route path='/changePassword' element={<ChangePassword/>}/>
 </Routes>
-{/* <EmailVerification/> */}
+
   </>
   )
 }

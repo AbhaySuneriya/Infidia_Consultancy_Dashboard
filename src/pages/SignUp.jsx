@@ -13,45 +13,89 @@ const SignUp = () => {
     email: "",
     password: "",
     name: "",
-    phone: "",
+    mobile: "",
     confirmPassword: "",
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setSignUpInfo({ ...signUpInfo, [name]: value });
+    setSignUpInfo((prev) => ({
+      ...prev,
+      [name]: name === "name" ? value : value.trim(), // Trim spaces except for name
+    }));
   };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const { name, email, phone, password, confirmPassword } = signUpInfo;
+    const { name, email, mobile, password, confirmPassword } = signUpInfo;
 
-    if (!name || !email || !phone || !password || !confirmPassword) {
-      toast.error("All fields are required", { onClose: () => setIsSubmitting(false) });
+    // Trim input and check if any field is empty
+    if (!name.trim() || !email || !mobile || !password || !confirmPassword) {
+      toast.error("All fields are required");
+      setIsSubmitting(false);
       return;
     }
 
+    // Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Invalid email format.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Mobile Number Validation (10 digits, starts with 6-9)
+    const mobileRegex = /^[6-9]\d{9}$/;
+    if (!mobileRegex.test(mobile)) {
+      toast.error("Enter a valid 10-digit mobile number.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Password Strength Validation (Min 8 characters, 1 letter, 1 number)
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      toast.error("Password must be at least 8 characters long and contain letters and numbers.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Confirm Password Check
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match", { onClose: () => setIsSubmitting(false) });
+      toast.error("Passwords do not match");
+      setIsSubmitting(false);
       return;
     }
 
     try {
-      const response = await registerAdmin({ name, email, phone, password });
-      setSignUpInfo({ email: "", password: "", name: "", phone: "", confirmPassword: "" });
-      toast.success(response.data.message || "Registration Successful", {
+      console.log("Sending data to server:", { name, email, mobile, password });
+      const response = await registerAdmin({ name, email, mobile, password });
+
+      // Reset Form
+      setSignUpInfo({
+        email: "",
+        password: "",
+        name: "",
+        mobile: "",
+        confirmPassword: "",
+      });
+
+      toast.success(response.data?.message || "Registration Successful", {
         onClose: () => {
           setIsSubmitting(false);
           setTimeout(() => navigate("/"), 2000);
         },
       });
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Registration Failed";
-      toast.error(errorMessage, { onClose: () => setIsSubmitting(false) });
+      console.error("Error during registration:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Registration Failed";
+      toast.error(errorMessage);
+      setIsSubmitting(false);
     }
   };
 
@@ -67,24 +111,39 @@ const SignUp = () => {
             <div className="w-full">
               <h1 className="mb-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">Create an Account</h1>
               <form onSubmit={handleSignUp}>
-                <input onChange={handleChange} name="name" type="text" value={signUpInfo.name} placeholder="Name" className='border border-gray-300 rounded-md w-full h-12 px-3 mt-2' />
-                <input onChange={handleChange} name="email" type="email" value={signUpInfo.email} placeholder="Email" className='border border-gray-300 rounded-md w-full h-12 px-3 mt-2' />
-                <input onChange={handleChange} name="phone" type="text" value={signUpInfo.phone} placeholder="Phone" className='border border-gray-300 rounded-md w-full h-12 px-3 mt-2' />
-                <div className='relative'>
-                  <input onChange={handleChange} name="password" type={showPassword ? "text" : "password"} value={signUpInfo.password} placeholder="Password" className='border border-gray-300 rounded-md w-full h-12 px-3 mt-2' />
-                  <button type="button" className="absolute right-3 top-4 text-gray-600" onClick={() => setShowPassword(!showPassword)}>
+                <input onChange={handleChange} name="name" type="text" value={signUpInfo.name} placeholder="Name" className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2" />
+                <input onChange={handleChange} name="email" type="email" value={signUpInfo.email} placeholder="Email" className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2" />
+                <input onChange={handleChange} name="mobile" type="tel" value={signUpInfo.mobile} placeholder="Mobile" className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2" />
+                
+                {/* Password Input */}
+                <div className="relative">
+                  <input onChange={handleChange} name="password" type={showPassword ? "text" : "password"} value={signUpInfo.password} placeholder="Password" className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2" />
+                  <button type="button" className="absolute right-3 top-5 mt-1 text-gray-600" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-                <div className='relative'>
-                  <input onChange={handleChange} name="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={signUpInfo.confirmPassword} placeholder="Confirm Password" className='border border-gray-300 rounded-md w-full h-12 px-3 mt-2' />
-                  <button type="button" className="absolute right-3 top-4 text-gray-600" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+
+                {/* Confirm Password Input */}
+                <div className="relative">
+                  <input onChange={handleChange} name="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={signUpInfo.confirmPassword} placeholder="Confirm Password" className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2" />
+                  <button type="button" className="absolute right-3 top-5 mt-1 text-gray-600" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    {/* {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />} */}
                   </button>
                 </div>
-                <button type="submit" className={`w-full h-12 bg-emerald-600 text-white rounded-md mt-4 cursor-pointer ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`} disabled={isSubmitting}>Create Account</button>
+
+                {/* Submit Button with Loader */}
+                <button type="submit" className={`w-full cursor-pointer h-12 bg-emerald-600 text-white rounded-md mt-4 flex items-center justify-center ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                  ) : "Create Account"}
+                </button>
               </form>
-              <p className='mt-1'>Already have an account? <Link className="text-sm font-medium text-emerald-500 dark:text-emerald-400 hover:underline" to="/">Login</Link></p>
+              <p className="mt-1">
+                Already have an account? <Link className="text-sm font-medium text-emerald-500 dark:text-emerald-400 hover:underline" to="/">Login</Link>
+              </p>
             </div>
           </main>
         </div>

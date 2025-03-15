@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';  // Import Lucide icons
+import { Eye, EyeOff } from 'lucide-react';  
 import ImageLight from '../assets/img/login-office.png';
 import ImageDark from '../assets/img/login-office-dark.png';
 import useAuthStore from '../store/authStore';
@@ -8,42 +8,50 @@ import { loginAdmin } from '../api/authApi';
 import { handleError, handleSuccess } from '../utils';
 import { ToastContainer } from 'react-toastify';
 
+
 const Login = () => {
     const { login } = useAuthStore();
     const navigate = useNavigate();
-    const [loginInfo, setLoginInfo] = useState({
-        email: '',
-        password: ''
-    });
-    const [showPassword, setShowPassword] = useState(false);  // New state for password visibility
+   const [email, setEmail] = useState("");
+   const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);  
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setLoginInfo({ ...loginInfo, [name]: value });
-    };
+    // ✅ Fix handleChange to ensure correct state update
+    // const handleChange = (e) => {
+    //     const { name, value } = e.target;
+    //     console.log(`Updating state: ${name} = ${value}`);  // Debugging line
+    //     setLoginInfo(prevState => ({ ...prevState, [name]: value }));
+    // };
 
+    // ✅ Debugging and Corrected API Request
     const handleLogin = async (e) => {
         e.preventDefault();
-        const { email, password } = loginInfo;
-
+    
+        if (!email || !password) {
+            handleError("Email and password are required");
+            return;
+        }
+    
         try {
-            const response = await loginAdmin({ email, password });
+           // Ensure correct structure
+            console.log("Sending request with:", JSON.stringify({email, password}));
+    
+            const response = await loginAdmin({ user : { email, password }}); // Ensure payload is sent properly
+            console.log("Server response:", response?.data);
+    
+            if (!response?.data?.user || !response?.data?.token) {
+                throw new Error("Invalid response from server");
+            }
+    
             login(response.data.user, response.data.token);
             handleSuccess("Login Successful");
             navigate('/home');
         } catch (error) {
-            if (error.response?.status === 401) {
-                handleError("Invalid email or password");
-            } else {
-                handleError("Login Failed");
-            }
-
-            setLoginInfo({
-                email: '',
-                password: ''
-            });
+            console.error("Error from server:", error.response?.data || error);
+            handleError(error.response?.data?.message || "Login Failed");
         }
     };
+    
 
     return (
         <div className="flex items-center min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
@@ -75,8 +83,8 @@ const Login = () => {
                                     type="email"
                                     autoComplete="username"
                                     placeholder="Email"
-                                    onChange={handleChange}
-                                    value={loginInfo.email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    value={email}
                                     className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2"
                                 />
 
@@ -84,11 +92,11 @@ const Login = () => {
                                     <input
                                         required
                                         name="password"
-                                        type={showPassword ? "text" : "password"} // Toggle between text & password
+                                        type={showPassword ? "text" : "password"} 
                                         autoComplete="current-password"
                                         placeholder="Password"
-                                        onChange={handleChange}
-                                        value={loginInfo.password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        value={password}
                                         className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2 pr-10"
                                     />
                                     <button
@@ -107,7 +115,7 @@ const Login = () => {
 
                             <div>
                                 <p className="mt-4">
-                                    <Link className="text-sm font-medium text-emerald-500 dark:text-emerald-400 hover:underline" to="/forgetPassword">
+                                    <Link className="text-sm font-medium text-emerald-500 dark:text-emerald-400 hover:underline" to="/emailOtpVerification">
                                         Forgot Password?
                                     </Link>
                                 </p>
