@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { sendOtp, verifyOtp } from "../api/authApi";
+import { forgotAdminPassword, verifyOtp } from "../api/authApi"; // Import forgotAdminPassword
 import ImageLight from "../assets/img/login-office.png";
 import ImageDark from "../assets/img/login-office-dark.png";
 import { handleError, handleSuccess } from "../utils";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer, toast } from "react-toastify";
 
 const EmailOtpVerification = () => {
     const [email, setEmail] = useState("");
@@ -12,7 +12,7 @@ const EmailOtpVerification = () => {
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [timer, setTimer] = useState(30);
     const [isResendDisabled, setIsResendDisabled] = useState(true);
-    const [isSendDisabled, setIsSendDisabled] = useState(false); // Disable send OTP button
+    const [isSendDisabled, setIsSendDisabled] = useState(false);
 
     const navigate = useNavigate();
 
@@ -29,17 +29,25 @@ const EmailOtpVerification = () => {
     }, [isOtpSent, timer]);
 
     const handleSendOtp = async () => {
+        if (!email) {
+            handleError("Please enter your email.");
+            return;
+        }
+
         try {
-            setIsSendDisabled(true); // Disable button while sending OTP
-            await sendOtp(email);
+            setIsSendDisabled(true);
+            console.log("Sending request to forgotAdminPassword API with email:", email);
+            const response = await forgotAdminPassword(email); // Pass email correctly to API
+            console.log("Response received from forgotAdminPassword API:", response.data);
+
             setIsOtpSent(true);
-            handleSuccess("OTP sent to your registered email");
-            localStorage.setItem("userEmail", email); // Store email in local storage
+            handleSuccess("OTP sent to your registered email.");
+            
+            sessionStorage.setItem("userEmail", email); // Store email in sessionStorage
 
             setTimer(30);
             setIsResendDisabled(true);
 
-            // Enable button after toast disappears
             toast.onChange((payload) => {
                 if (payload.status === "removed") {
                     setIsSendDisabled(false);
@@ -47,21 +55,27 @@ const EmailOtpVerification = () => {
             });
 
         } catch (error) {
-            handleError("Failed to send OTP");
+            console.error("Error response from forgotAdminPassword API:", error.response?.data || error);
+            handleError(error.response?.data?.message || "Failed to send OTP.");
             setIsSendDisabled(false);
         }
     };
 
     const handleVerifyOtp = async () => {
         try {
+            console.log("Sending request to verifyOtp API with:", { email, otp });
             const response = await verifyOtp({ email, otp });
+            console.log("Response received from verifyOtp API:", response.data);
+
             handleSuccess(response.data.message || "OTP verified successfully.");
             
+            sessionStorage.setItem("userOtp", otp); // Store OTP in sessionStorage
+            
             setTimeout(() => {
-                navigate("/changePassword"); // Redirect after successful verification
-            }, 2000); // Delay for better user experience
-
+                navigate("/changePassword");
+            }, 2000);
         } catch (error) {
+            console.error("Error response from verifyOtp API:", error.response?.data || error);
             handleError("Invalid OTP. Please try again.");
         }
     };
@@ -79,7 +93,7 @@ const EmailOtpVerification = () => {
                         <div className="w-full">
                             {!isOtpSent ? (
                                 <>
-                                    <h1 className="mb-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Forgot password</h1>
+                                    <h1 className="mb-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Forgot Password</h1>
                                     <input
                                         type="email"
                                         placeholder="john@doe.com"

@@ -2,11 +2,12 @@ import React from 'react'
 import { Navigate,Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
-import Home from './pages/Home'
+import Dashboard from './pages/Dashboard'
 import 'react-toastify/dist/ReactToastify.css'
 
 import EmailOtpVerification from './pages/EmailOtpVerification'
 import ChangePassword from './pages/ChangePassword'
+import ForgotPassword from './pages/ForgotPassword'
 
 const App = () => {
   return (
@@ -16,9 +17,10 @@ const App = () => {
 <Route path="/" element={<Navigate to="/login" />} />
 <Route path="/login" element={<Login/>} />
 <Route path="/signup" element={<SignUp/>} />
-<Route path="/home" element={<Home/>} />
- <Route path="/emailOtpVerification" element={<EmailOtpVerification/>}/>
- <Route path='/changePassword' element={<ChangePassword/>}/>
+<Route path="/forgotPassword" element={<ForgotPassword/>}/>
+<Route path="/dashboard" element={<Dashboard/>} />
+ {/* <Route path="/emailOtpVerification" element={<EmailOtpVerification/>}/>
+ <Route path='/changePassword' element={<ChangePassword/>}/> */}
 </Routes>
 
   </>

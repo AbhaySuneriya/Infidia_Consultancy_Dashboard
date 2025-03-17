@@ -1,116 +1,85 @@
-import React, { useState, useEffect } from "react";
-
- // Ensure correct path
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { resetPassword } from "../api/authApi";
+import { handleError, handleSuccess } from "../utils";
+import { ToastContainer } from "react-toastify";
 
-const ChangePasswordWithEmail = () => {
-  const [email, setEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+const ChangePassword = () => {
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    // Retrieve email from local storage
-    const storedEmail = localStorage.getItem("userEmail");
-    if (storedEmail) {
-      setEmail(storedEmail);
-    } else {
-      toast.error("No email found. Please verify your email first.");
-    }
-  }, []);
+    // Retrieve email and OTP from sessionStorage
+    const email = sessionStorage.getItem("userEmail");
+    const otp = sessionStorage.getItem("userOtp");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
 
-    if (!email) {
-      setError("Email is missing. Please verify your email first.");
-      toast.error("Email is missing. Please verify your email first.");
-      return;
-    }
+        if (!email || !otp) {
+            handleError("Session expired. Please request OTP again.");
+            navigate("/verify-otp"); // Redirect to OTP page
+            return;
+        }
 
-    if (newPassword !== confirmPassword) {
-      setError("New passwords do not match");
-      toast.error("New passwords do not match");
-      return;
-    }
+        if (!newPassword || !confirmPassword) {
+            handleError("All fields are required.");
+            return;
+        }
 
-    setLoading(true);
-    try {
-      const response = await resetPassword( {
-        email,
-        newPassword,
-      }, {
-        headers: { "Content-Type": "application/json" },
-      });
-      
-      if (response.status === 200) {
-        setSuccess("Password changed successfully");
-        toast.success("Password changed successfully");
-        localStorage.removeItem("userEmail"); // Clear stored email after reset
-      } else {
-        throw new Error("Unexpected server response");
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "An error occurred");
-      toast.error(err.response?.data?.message || "An error occurred");
-    }
-    setLoading(false);
-  };
+        if (newPassword !== confirmPassword) {
+            handleError("Passwords do not match.");
+            return;
+        }
 
-  return (
-    <div className="flex items-center min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
-      <div className="flex-1 h-full max-w-4xl mx-auto overflow-hidden bg-white rounded-lg shadow-xl dark:bg-gray-800">
-        <div className="flex flex-col overflow-y-auto md:flex-row">
-          <main className="flex items-center justify-center p-6 sm:p-12 w-full">
-            <div className="w-full max-w-md">
-              <h1 className="mb-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
-                Change Password
-              </h1>
-              <p className="text-center mb-3 font-bold">{localStorage.getItem("userEmail")}</p>
-              {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-              {success && <p className="text-green-500 text-sm mb-2">{success}</p>}
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-gray-700">New Password</label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border rounded"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700">Confirm New Password</label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border rounded"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-                  disabled={loading}
-                >
-                  {loading ? "Changing..." : "Change Password"}
-                </button>
-              </form>
+        try {
+            setIsSubmitting(true);
+            const response = await resetPassword({ email, otp, newPassword }); // Send 'newPassword' instead of 'password'
+            handleSuccess(response.data.message || "Password changed successfully!");
+
+            // Clear session storage after password reset
+            sessionStorage.removeItem("userEmail");
+            sessionStorage.removeItem("userOtp");
+
+            setTimeout(() => {
+                navigate("/login");
+            }, 2000);
+        } catch (error) {
+            handleError(error.response?.data?.message || "Failed to reset password.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="flex items-center min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
+            <div className="flex-1 max-w-md mx-auto overflow-hidden bg-white rounded-lg shadow-lg dark:bg-gray-800 p-6">
+                <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 text-center mb-4">Change Password</h2>
+                <form onSubmit={handleChangePassword}>
+                    <input
+                        type="password"
+                        placeholder="New Password"
+                        className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <input
+                        type="password"
+                        placeholder="Confirm Password"
+                        className="border border-gray-300 rounded-md w-full h-12 px-3 mt-2"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+
+                    <button type="submit" className="w-full h-12 bg-emerald-600 text-white rounded-md mt-4" disabled={isSubmitting}>
+                        {isSubmitting ? "Updating..." : "Change Password"}
+                    </button>
+                </form>
             </div>
-          </main>
+            <ToastContainer />
         </div>
-      </div>
-      <ToastContainer />
-    </div>
-  );
+    );
 };
 
-export default ChangePasswordWithEmail;
+export default ChangePassword;
