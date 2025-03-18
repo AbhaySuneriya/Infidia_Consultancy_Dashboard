@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { forgotAdminPassword, resetPassword } from "../api/authApi";
+import { forgotAdminPassword, resetPassword, resendForgotOtp } from "../api/authApi";
 import { handleError, handleSuccess } from "../utils";
 import { ToastContainer, toast } from "react-toastify";
 import { quantum } from "ldrs"; 
-import { Loader } from "lucide-react";
+import Loader from "../component/Loader"; // Use reusable Loader component
 
 quantum.register(); // Register the loader
 
@@ -18,6 +18,7 @@ const ForgotPassword = () => {
     const [timer, setTimer] = useState(30);
     const [isResendDisabled, setIsResendDisabled] = useState(true);
     const [isSendDisabled, setIsSendDisabled] = useState(false);
+    const [resendClicked, setResendClicked] = useState(false); // Prevent multiple resends
 
     const navigate = useNavigate();
 
@@ -29,6 +30,7 @@ const ForgotPassword = () => {
             }, 1000);
         } else if (timer === 0) {
             setIsResendDisabled(false);
+            setResendClicked(false); // Allow resending after 30s
         }
         return () => clearInterval(interval);
     }, [isOtpSent, timer]);
@@ -53,6 +55,7 @@ const ForgotPassword = () => {
 
             setTimer(30);
             setIsResendDisabled(true);
+            setResendClicked(false);
 
             toast.onChange((payload) => {
                 if (payload.status === "removed") {
@@ -64,6 +67,29 @@ const ForgotPassword = () => {
             console.error("Error response from forgotAdminPassword API:", error.response?.data || error);
             handleError(error.response?.data?.message || "Failed to send OTP.");
             setIsSendDisabled(false);
+        }
+    };
+
+    // Handle Resending OTP
+    const handleResendOtp = async () => {
+        if (resendClicked || isResendDisabled) return; // Prevent multiple clicks
+
+        try {
+            setResendClicked(true);
+            setIsResendDisabled(true); // Disable button immediately
+            console.log("Sending request to resendForgotOtp API with email:", email);
+            const response = await resendForgotOtp(email);
+            console.log("Response received from resendForgotOtp API:", response.data);
+
+            handleSuccess("OTP resent to your email.");
+
+            setTimer(30); // Reset timer
+
+        } catch (error) {
+            console.error("Error response from resendForgotOtp API:", error.response?.data || error);
+            handleError(error.response?.data?.message || "Failed to resend OTP.");
+            setIsResendDisabled(false);
+            setResendClicked(false); // Allow retry if request failed
         }
     };
 
@@ -117,15 +143,8 @@ const ForgotPassword = () => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                         />
-                        {isSendDisabled ? (
-                            <div className="flex justify-center mt-4">
-                               <Loader/>
-                            </div>
-                        ) : (
-                            <button
-                                className="w-full h-12 bg-emerald-600 text-white rounded-md mt-4"
-                                onClick={handleSendOtp}
-                            >
+                        {isSendDisabled ? <Loader className="text-white" /> : (
+                            <button className="w-full h-12 bg-emerald-600 text-white rounded-md mt-4" onClick={handleSendOtp}>
                                 Send OTP
                             </button>
                         )}
@@ -155,27 +174,20 @@ const ForgotPassword = () => {
                             onChange={(e) => setConfirmPassword(e.target.value)}
                         />
 
-                        {isSubmitting ? (
-                            <div className="flex justify-center mt-4">
-                               <Loader/>
-                            </div>
-                        ) : (
-                            <button
-                                className="w-full h-12 bg-emerald-600 text-white rounded-md mt-4"
-                                onClick={handleResetPassword}
-                            >
+                        {isSubmitting ? <Loader className="text-white" /> : (
+                            <button className="w-full h-12 bg-emerald-600 text-white rounded-md mt-4" onClick={handleResetPassword}>
                                 Change Password
                             </button>
                         )}
 
                         <button
                             className={`w-full py-2 mt-2 rounded ${
-                                isResendDisabled ? "bg-transparent cursor-not-allowed" : "bg-transparent hover:text-emerald-800 text-emerald-600"
+                                isResendDisabled || resendClicked ? "bg-transparent cursor-not-allowed" : "bg-transparent  text-emerald-600"
                             }`}
-                            onClick={handleSendOtp}
-                            disabled={isResendDisabled}
+                            onClick={handleResendOtp}
+                            disabled={isResendDisabled || resendClicked}
                         >
-                            Resend OTP? {isResendDisabled && `(${timer}s)`}
+                            Resend OTP {isResendDisabled && `(${timer}s)`}
                         </button>
                     </>
                 )}

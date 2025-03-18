@@ -44,7 +44,7 @@ const Login = () => {
       handleSuccess("Login Successful!");
 
       // Navigate to home page after 1 second
-      setTimeout(() => navigate("/dashboard"), 1000);
+      setTimeout(() => navigate("/home"), 1000);
     } catch (error) {
       console.error("Error details:", error.response?.data || error.message);
       handleError(error.response?.data?.message || "Login Failed. Please try again.");
@@ -74,7 +74,7 @@ const Login = () => {
           <main className="flex items-center justify-center p-6 sm:p-12 md:w-1/2">
             <div className="w-full">
               <h1 className="mb-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
-                Welcome Back 👋
+                Welcome Back 
               </h1>
               <form onSubmit={handleLogin}>
                 <input

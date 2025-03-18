@@ -27,8 +27,9 @@ export const verifyOtp = async (otpData) => {
   return axios.post(`${API_BASE_URL}/api/adminauth/admin-verify-otp`, otpData);
 };
 
-export const resendOtp = async (email) => {
-  return axios.post(`${API_BASE_URL}/api/adminauth/admin-resend-otp`, { email });
+
+export const resendForgotOtp = async (email) => {
+  return axios.post(`${API_BASE_URL}/api/adminauth/admin-resend-forgot-password-otp`, { email });
 };
 
 export const forgotAdminPassword = async (email) => {
@@ -38,6 +39,7 @@ export const forgotAdminPassword = async (email) => {
 export const resetPassword = async (resetData) => {
   return axios.post(`${API_BASE_URL}/api/adminauth/admin-reset-password`, resetData);
 };
+
 
 export const requestAdminEmailVerification = async (email) => {
   return axios.post(`${API_BASE_URL}/api/adminauth/admin-email-verification`, { email });

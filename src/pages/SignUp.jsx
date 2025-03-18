@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Loader } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import ImageLight from "../assets/img/login-office.png";
 import ImageDark from "../assets/img/login-office-dark.png";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { registerAdmin } from "../api/authApi";
 import { quantum } from "ldrs";
+import Loader from '../component/Loader'
 
 quantum.register();
 
@@ -57,7 +58,7 @@ const SignUp = () => {
       toast.success(response.data?.message || "Registration Successful", {
         onClose: () => {
           setIsSubmitting(false);
-          setTimeout(() => navigate("/"), 100);
+          setTimeout(() => navigate("/"), 50);
         },
       });
     } catch (error) {

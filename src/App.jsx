@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import EmailOtpVerification from './pages/EmailOtpVerification'
 import ChangePassword from './pages/ChangePassword'
 import ForgotPassword from './pages/ForgotPassword'
+import Home from './pages/Home'
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
 <Route path="/signup" element={<SignUp/>} />
 <Route path="/forgotPassword" element={<ForgotPassword/>}/>
 <Route path="/dashboard" element={<Dashboard/>} />
+<Route path='/home' element={<Home/>}/>
  {/* <Route path="/emailOtpVerification" element={<EmailOtpVerification/>}/>
  <Route path='/changePassword' element={<ChangePassword/>}/> */}
 </Routes>
